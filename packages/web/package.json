@@ -2,6 +2,7 @@
   "name": "@beepad/web",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -11,6 +12,7 @@
   },
   "dependencies": {
     "@beepad/shared": "workspace:*",
+    "@tailwindcss/postcss": "^4.1.6",
     "@tiptap/core": "^2.12.0",
     "@tiptap/extension-collaboration": "^2.12.0",
     "@tiptap/extension-collaboration-cursor": "^2.12.0",
@@ -18,8 +20,10 @@
     "@tiptap/react": "^2.12.0",
     "@tiptap/starter-kit": "^2.12.0",
     "next": "^15.3.2",
+    "postcss": "^8.5.3",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "tailwindcss": "^4.1.6",
     "y-indexeddb": "^9.0.12",
     "y-websocket": "^3.0.0",
     "yjs": "^13.6.27"
@@ -31,8 +35,6 @@
     "autoprefixer": "^10.4.21",
     "eslint": "^9.26.0",
     "eslint-config-next": "^15.3.2",
-    "postcss": "^8.5.3",
-    "tailwindcss": "^4.1.6",
     "typescript": "^5.8.3"
   }
 }

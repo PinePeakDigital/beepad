@@ -10,15 +10,9 @@
     "allowJs": true,
     "noEmit": true,
     "incremental": true,
-    "module": "esnext",
-    "moduleResolution": "bundler"
+    "module": "nodenext",
+    "moduleResolution": "nodenext"
   },
-  "include": [
-    "next-env.d.ts",
-    "src",
-    ".next/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["next-env.d.ts", "src", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
 }
