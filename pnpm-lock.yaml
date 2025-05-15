@@ -41,6 +41,9 @@ importers:
         specifier: ^13.6.27
         version: 13.6.27
     devDependencies:
+      '@electric-sql/pglite':
+        specifier: ^0.3.1
+        version: 0.3.1
       '@mapbox/node-pre-gyp':
         specifier: ^2.0.0
         version: 2.0.0(encoding@0.1.13)
@@ -67,7 +70,7 @@ importers:
         version: 0.31.1
       drizzle-orm:
         specifier: ^0.43.1
-        version: 0.43.1(@libsql/client@0.15.6)(@types/better-sqlite3@7.6.13)(@types/pg@8.15.1)(better-sqlite3@11.10.0)(pg@8.16.0)(sqlite3@5.1.7)
+        version: 0.43.1(@electric-sql/pglite@0.3.1)(@libsql/client@0.15.6)(@types/better-sqlite3@7.6.13)(@types/pg@8.15.1)(better-sqlite3@11.10.0)(pg@8.16.0)(sqlite3@5.1.7)
       eslint:
         specifier: ^9.26.0
         version: 9.26.0(jiti@2.4.2)
@@ -220,6 +223,9 @@ packages:
 
   '@drizzle-team/brocli@0.10.2':
     resolution: {integrity: sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w==}
+
+  '@electric-sql/pglite@0.3.1':
+    resolution: {integrity: sha512-Kpbd2FMXnM5I56ZpMnGKZhv+h31ipeimgyJVb1C+nWFTikp33z0TTwmksEtHpPinuqKiMJblH2OJM0RubKvJgg==}
 
   '@emnapi/core@1.4.3':
     resolution: {integrity: sha512-4m62DuCE07lw01soJwPiBGC0nAww0Q+RY70VZ+n49yDIO13yyinhbWCeNnaob0lakDtWQzSdtNWzJeOJt2ma+g==}
@@ -4116,6 +4122,8 @@ snapshots:
 
   '@drizzle-team/brocli@0.10.2': {}
 
+  '@electric-sql/pglite@0.3.1': {}
+
   '@emnapi/core@1.4.3':
     dependencies:
       '@emnapi/wasi-threads': 1.0.2
@@ -5660,8 +5668,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.43.1(@libsql/client@0.15.6)(@types/better-sqlite3@7.6.13)(@types/pg@8.15.1)(better-sqlite3@11.10.0)(pg@8.16.0)(sqlite3@5.1.7):
+  drizzle-orm@0.43.1(@electric-sql/pglite@0.3.1)(@libsql/client@0.15.6)(@types/better-sqlite3@7.6.13)(@types/pg@8.15.1)(better-sqlite3@11.10.0)(pg@8.16.0)(sqlite3@5.1.7):
     optionalDependencies:
+      '@electric-sql/pglite': 0.3.1
       '@libsql/client': 0.15.6
       '@types/better-sqlite3': 7.6.13
       '@types/pg': 8.15.1
