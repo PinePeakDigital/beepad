@@ -13,8 +13,10 @@
   "dependencies": {
     "@beepad/shared": "workspace:*",
     "@hono/node-server": "^1.14.1",
+    "@types/ws": "^8.18.1",
     "hono": "^4.7.9",
     "pg": "^8.11.3",
+    "ws": "^8.18.2",
     "y-websocket": "^3.0.0",
     "yjs": "^13.6.27"
   },

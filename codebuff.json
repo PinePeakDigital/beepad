@@ -1,0 +1,28 @@
+{
+  "description": "Template configuration for this project. See https://www.codebuff.com/config for all options.",
+  "startupProcesses": [
+    {
+      "name": "web",
+      "command": "pnpm --filter @beepad/web dev",
+      "cwd": "packages/web",
+      "stdoutFile": "logs/web.log"
+    },
+    {
+      "name": "server",
+      "command": "pnpm --filter @beepad/server dev",
+      "cwd": "packages/server",
+      "stdoutFile": "logs/server.log"
+    },
+    {
+      "name": "shared",
+      "command": "pnpm --filter @beepad/shared dev",
+      "cwd": "packages/shared",
+      "stdoutFile": "logs/shared.log"
+    },
+    {
+      "name": "docker",
+      "command": "docker compose up",
+      "stdoutFile": "logs/docker.log"
+    }
+  ]
+}

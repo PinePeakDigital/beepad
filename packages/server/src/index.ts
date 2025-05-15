@@ -13,13 +13,13 @@ app.get('/', (c) => c.text('BeePad API'));
 const server = createServer();
 
 // Set up WebSocket server
-const wss = setupWebSocket(server);
+setupWebSocket(server);
 
 // Start the server
 serve({
   fetch: app.fetch,
   port: Number(port),
-  server,
+  createServer: () => server,
 }, (info) => {
   console.log(`Server running at http://localhost:${info.port}`);
 });

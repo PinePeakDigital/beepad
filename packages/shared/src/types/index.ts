@@ -1,16 +1,16 @@
 export interface Note {
+  id: number;
   slug: string;
-  content: string;
-  versions: Version[];
-  createdAt: Date;
-  updatedAt: Date;
+  created_at: Date;
+  updated_at: Date;
 }
 
 export interface Version {
-  id: string;
+  id: number;
+  note_id: number;
   snapshot: Uint8Array;
-  timestamp: Date;
   author: string;
+  created_at: Date;
 }
 
 export interface UserEdit {
