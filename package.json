@@ -8,7 +8,8 @@
     "build": "pnpm -r run build",
     "test": "pnpm -r run test",
     "lint": "pnpm -r run lint",
-    "typecheck": "pnpm -r run typecheck"
+    "typecheck": "pnpm -r run typecheck",
+    "knip": "knip"
   },
   "keywords": [
     "collaboration",
@@ -19,5 +20,10 @@
   ],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.6.1"
+  "packageManager": "pnpm@10.6.1",
+  "devDependencies": {
+    "@types/node": "^22.15.18",
+    "knip": "^5.56.0",
+    "typescript": "^5.8.3"
+  }
 }
