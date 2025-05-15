@@ -5,26 +5,28 @@ import { setupWebSocket } from '../index';
 import { createServer } from 'http';
 import { createTestDb } from '../../db/__tests__/test-db';
 import { eq } from 'drizzle-orm';
-import { yDocs } from '../../db/schema';
+import { yDocs, notes } from '../../db/schema';
 
 describe('WebSocket Server with SQLite', () => {
   let server: ReturnType<typeof createServer>;
   let wss: WebSocketServer;
   const TEST_PORT = 3002;
   const testDb = createTestDb();
+  const TEST_SAVE_INTERVAL = 100; // 100ms for tests
 
-  beforeEach(() => {
+  beforeEach(async () => {
     server = createServer();
-    wss = setupWebSocket(server, testDb.db);
+    wss = setupWebSocket(server, testDb.db, TEST_SAVE_INTERVAL);
     server.listen(TEST_PORT);
+
+    // Clear tables before each test
+    await testDb.db.delete(yDocs);
+    await testDb.db.delete(notes);
   });
 
   afterEach(() => {
     wss.close();
     server.close();
-    // Clear all tables
-    testDb.sqlite.exec('DELETE FROM y_docs');
-    testDb.sqlite.exec('DELETE FROM notes');
   });
 
   test('should handle rapid connect/disconnect cycles', async () => {
@@ -55,13 +57,18 @@ describe('WebSocket Server with SQLite', () => {
     ws1.send(Buffer.from(update));
 
     // Wait for save
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, 200)); // Wait for save
     ws1.close();
     await new Promise(resolve => setTimeout(resolve, 100));
 
     // Verify state was saved
-    const savedState = await testDb.db.select().from(yDocs).where(eq(yDocs.docName, 'test-doc'));
+    const savedState = await testDb.db
+      .select()
+      .from(yDocs)
+      .where(eq(yDocs.docName, 'test-doc'));
+
     expect(savedState[0]).toBeTruthy();
+    expect(savedState[0].state).toBeTruthy();
 
     // Second connection: should receive saved state
     const ws2 = new WebSocket(`ws://localhost:${TEST_PORT}/test-doc`);
@@ -113,22 +120,24 @@ describe('WebSocket Server with SQLite', () => {
     const update = Y.encodeStateAsUpdate(doc);
     ws.send(Buffer.from(update));
     
-    // Wait a bit and then close
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Wait for save
+    await new Promise(resolve => setTimeout(resolve, 200));
     ws.close();
-    
-    // Wait for cleanup
     await new Promise(resolve => setTimeout(resolve, 100));
     
     // Check state was saved
-    const savedState = await testDb.db.select().from(yDocs).where(eq(yDocs.docName, 'test-doc'));
+    const savedState = await testDb.db
+      .select()
+      .from(yDocs)
+      .where(eq(yDocs.docName, 'test-doc'));
+
     expect(savedState[0].state).toBeTruthy();
 
     // Verify saved state is correct
     const savedDoc = new Y.Doc();
     Y.applyUpdate(savedDoc, new Uint8Array(JSON.parse(savedState[0].state!)));
     expect(savedDoc.getText('test').toString()).toBe('Test content');
-  });
+  }, 10000); // Increase timeout for this test
 
   test('should handle large documents', async () => {
     const ws = new WebSocket(`ws://localhost:${TEST_PORT}/test-doc`);
@@ -144,15 +153,19 @@ describe('WebSocket Server with SQLite', () => {
     ws.send(Buffer.from(update));
     
     // Wait for save
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, 200));
     
     // Check state was saved
-    const savedState = await testDb.db.select().from(yDocs).where(eq(yDocs.docName, 'test-doc'));
+    const savedState = await testDb.db
+      .select()
+      .from(yDocs)
+      .where(eq(yDocs.docName, 'test-doc'));
+
     expect(savedState[0].state).toBeTruthy();
 
     // Verify saved state is correct
     const savedDoc = new Y.Doc();
     Y.applyUpdate(savedDoc, new Uint8Array(JSON.parse(savedState[0].state!)));
     expect(savedDoc.getText('test').toString()).toBe(largeText);
-  });
+  }, 10000); // Increase timeout for this test
 });

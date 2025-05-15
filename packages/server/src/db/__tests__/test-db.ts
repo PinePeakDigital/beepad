@@ -1,6 +1,7 @@
 import { drizzle } from "drizzle-orm/better-sqlite3";
 import Database from "better-sqlite3";
 import { sql } from "drizzle-orm";
+import { logger } from "./test-db-logger";
 
 // Create SQLite schema that matches our PostgreSQL schema
 import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
@@ -51,7 +52,10 @@ export const yDocs = sqliteTable("y_docs", {
 export function createTestDb() {
   // Create an in-memory SQLite database
   const sqlite = new Database(":memory:");
-  const db = drizzle(sqlite);
+
+  // Enable foreign keys and WAL mode for better concurrency
+  sqlite.pragma("foreign_keys = ON");
+  sqlite.pragma("journal_mode = WAL");
 
   // Create tables
   sqlite.exec(`
@@ -84,6 +88,9 @@ export function createTestDb() {
       updated_at TEXT DEFAULT CURRENT_TIMESTAMP
     );
   `);
+
+  // Create drizzle instance
+  const db = drizzle(sqlite, { logger });
 
   return { db, sqlite };
 }
