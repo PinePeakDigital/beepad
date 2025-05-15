@@ -3,11 +3,11 @@
 ## 1. Project Setup & Infrastructure
 
 ### Frontend Setup
-- Initialize Next.js project with TypeScript
-- Set up Tailwind CSS for styling
+- Initialize Next.js project with TypeScript ✅
+- Set up Tailwind CSS for styling ✅
 - Configure ESLint and Prettier
 - Set up testing infrastructure (Vitest + React Testing Library)
-- Create basic project structure
+- Create basic project structure ✅
   - `/src/components`
   - `/src/hooks`
   - `/src/utils`
@@ -15,8 +15,12 @@
   - `/src/api`
 
 ### Backend Setup
-- Set up Hono server with TypeScript
-- Configure MongoDB for note storage
+- Set up Hono server with TypeScript ✅
+- Configure PostgreSQL for persistence
+  - Set up connection pool
+  - Configure y-pg provider
+  - Add migrations system
+  - Add database seeding
 - Set up WebSocket server for real-time updates
 - Configure authentication middleware
 - Set up testing infrastructure
@@ -24,13 +28,13 @@
 ## 2. Core Editor Implementation
 
 ### Basic Editor
-- Implement text editor using Tiptap
-- Configure essential Tiptap extensions
+- Implement text editor using Tiptap ✅
+- Configure essential Tiptap extensions ✅
   - Document
   - Paragraph
   - Text
   - Collaboration
-- Add basic text formatting capabilities
+- Add basic text formatting capabilities ✅
 
 ### CRDT Integration
 - Integrate Yjs through Tiptap's built-in collaboration extension
@@ -47,28 +51,40 @@
 ## 3. Server-Side Implementation
 
 ### Database Schema
-```typescript
-interface Note {
-  slug: string;
-  content: string;
-  versions: Version[];
-  createdAt: Date;
-  updatedAt: Date;
-}
+```sql
+-- Notes table for basic metadata
+CREATE TABLE notes (
+  id SERIAL PRIMARY KEY,
+  slug TEXT UNIQUE NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
 
-interface Version {
-  id: string;
-  snapshot: Uint8Array; // Yjs encoded state
-  timestamp: Date;
-  author: string;
-}
+-- Versions table for history
+CREATE TABLE versions (
+  id SERIAL PRIMARY KEY,
+  note_id INTEGER REFERENCES notes(id),
+  snapshot BYTEA NOT NULL,
+  author TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
 
-interface UserEdit {
-  userId: string;
-  timestamp: Date;
-  position: number;
-  length: number;
-}
+-- User preferences
+CREATE TABLE user_preferences (
+  user_id TEXT PRIMARY KEY,
+  highlight_color TEXT NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Yjs document storage
+CREATE TABLE y_docs (
+  doc_id TEXT PRIMARY KEY,
+  doc_name TEXT NOT NULL,
+  state BYTEA,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
 ```
 
 ### REST API Endpoints
@@ -127,7 +143,7 @@ interface UserEdit {
   ```
 - Add version comparison view
 - Add version browsing UI
-- Store versions in MongoDB
+- Store versions in PostgreSQL
 
 ## 5. URL & Embedding System
 
@@ -201,12 +217,12 @@ interface UserEdit {
 
 ## Implementation Order
 
-1. Basic Tiptap editor setup
+1. Basic Tiptap editor setup ✅
 2. Server setup + y-websocket provider
-3. Yjs integration via Tiptap Collaboration
+3. PostgreSQL + y-pg integration
 4. Real-time collaboration
 5. User highlighting
-6. Yjs-based version history
+6. Version history
 7. URL system
 8. Embedding support
 9. Security + Performance
