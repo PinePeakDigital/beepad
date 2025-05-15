@@ -6,12 +6,11 @@ import { eq } from "drizzle-orm";
 import { createNote, getNoteBySlug } from "../db/models/note";
 import { IncomingMessage } from "http";
 import { PostgresJsDatabase } from "drizzle-orm/postgres-js";
-import { PgDatabase } from "drizzle-orm/pg-core";
-import { PgQueryResultHKT } from "drizzle-orm/pg-core";
+import * as schema from "../db/schema";
+import { NodePgDatabase } from "drizzle-orm/node-postgres";
+import { PgliteDatabase } from "drizzle-orm/pglite";
 
-type Database =
-  | PostgresJsDatabase
-  | PgDatabase<PgQueryResultHKT, Record<string, unknown>>;
+type Database = NodePgDatabase<typeof schema> | PgliteDatabase<typeof schema>;
 
 function serializeState(doc: Y.Doc): string {
   const update = Y.encodeStateAsUpdate(doc);
