@@ -16,7 +16,7 @@ export async function up() {
     CREATE TABLE versions (
       id SERIAL PRIMARY KEY,
       note_id INTEGER REFERENCES notes(id),
-      snapshot BYTEA NOT NULL,
+      snapshot TEXT NOT NULL,
       author TEXT NOT NULL,
       created_at TIMESTAMPTZ DEFAULT NOW()
     );
@@ -36,7 +36,7 @@ export async function up() {
   await query(`
     CREATE TABLE y_docs (
       doc_name TEXT PRIMARY KEY,
-      state BYTEA,
+      state TEXT,
       created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW()
     );

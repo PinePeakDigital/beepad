@@ -1,6 +1,5 @@
-import { readFileSync } from 'fs';
-import { join } from 'path';
 import { query } from '../index';
+import { migrations } from './index';
 
 async function createMigrationsTable() {
   await query(`
@@ -21,15 +20,12 @@ async function run() {
   await createMigrationsTable();
   const executedMigrations = await getExecutedMigrations();
   
-  const migrationFiles = ['0000_initial.sql'];
-  
-  for (const file of migrationFiles) {
-    if (!executedMigrations.includes(file)) {
-      console.log(`Running migration: ${file}`);
-      const sql = readFileSync(join(__dirname, file), 'utf8');
-      await query(sql);
-      await query('INSERT INTO migrations (name) VALUES ($1)', [file]);
-      console.log(`Completed migration: ${file}`);
+  for (const migration of migrations) {
+    if (!executedMigrations.includes(migration.name)) {
+      console.log(`Running migration: ${migration.name}`);
+      await migration.up();
+      await query('INSERT INTO migrations (name) VALUES ($1)', [migration.name]);
+      console.log(`Completed migration: ${migration.name}`);
     }
   }
 }

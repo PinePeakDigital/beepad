@@ -10,23 +10,37 @@ import { yDocs, notes } from '../../db/schema';
 describe('WebSocket Server with SQLite', () => {
   let server: ReturnType<typeof createServer>;
   let wss: WebSocketServer;
-  const TEST_PORT = 3002;
+  let testPort: number;
   const testDb = createTestDb();
   const TEST_SAVE_INTERVAL = 100; // 100ms for tests
 
   beforeEach(async () => {
+    // Use a different port for each test to avoid conflicts
+    testPort = Math.floor(Math.random() * 1000) + 3000;
     server = createServer();
     wss = setupWebSocket(server, testDb.db, TEST_SAVE_INTERVAL);
-    server.listen(TEST_PORT);
-
+    
     // Clear tables before each test
     await testDb.db.delete(yDocs);
     await testDb.db.delete(notes);
+
+    await new Promise<void>((resolve, reject) => {
+      server.listen(testPort, () => resolve()).on('error', reject);
+    });
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    // Close all WebSocket connections
+    for (const client of wss.clients) {
+      client.close();
+    }
+    
+    // Wait for connections to close
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Close WebSocket server and HTTP server
     wss.close();
-    server.close();
+    await new Promise<void>(resolve => server.close(() => resolve()));
   });
 
   test('should handle rapid connect/disconnect cycles', async () => {
@@ -34,7 +48,7 @@ describe('WebSocket Server with SQLite', () => {
     const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
     
     for (let i = 0; i < cycles; i++) {
-      const ws = new WebSocket(`ws://localhost:${TEST_PORT}/test-doc`);
+      const ws = new WebSocket(`ws://localhost:${testPort}/test-doc`);
       await delay(100); // Wait for connection
       ws.close();
       await delay(100); // Wait for cleanup
@@ -46,7 +60,7 @@ describe('WebSocket Server with SQLite', () => {
 
   test('should preserve state across multiple connections', async () => {
     // First connection: create and save state
-    const ws1 = new WebSocket(`ws://localhost:${TEST_PORT}/test-doc`);
+    const ws1 = new WebSocket(`ws://localhost:${testPort}/test-doc`);
     await new Promise(resolve => ws1.on('open', resolve));
 
     // Create and send an update
@@ -54,10 +68,17 @@ describe('WebSocket Server with SQLite', () => {
     const text = doc.getText('test');
     text.insert(0, 'Hello');
     const update = Y.encodeStateAsUpdate(doc);
-    ws1.send(Buffer.from(update));
+    
+    // Send update and wait for it to be processed
+    await new Promise<void>((resolve, reject) => {
+      ws1.send(Buffer.from(update), (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
 
     // Wait for save
-    await new Promise(resolve => setTimeout(resolve, 200)); // Wait for save
+    await new Promise(resolve => setTimeout(resolve, TEST_SAVE_INTERVAL * 2));
     ws1.close();
     await new Promise(resolve => setTimeout(resolve, 100));
 
@@ -71,7 +92,7 @@ describe('WebSocket Server with SQLite', () => {
     expect(savedState[0].state).toBeTruthy();
 
     // Second connection: should receive saved state
-    const ws2 = new WebSocket(`ws://localhost:${TEST_PORT}/test-doc`);
+    const ws2 = new WebSocket(`ws://localhost:${testPort}/test-doc`);
     await new Promise(resolve => ws2.on('open', resolve));
 
     const message = await new Promise(resolve => ws2.on('message', resolve));
@@ -84,8 +105,8 @@ describe('WebSocket Server with SQLite', () => {
   });
 
   test('should handle concurrent connections to same document', async () => {
-    const ws1 = new WebSocket(`ws://localhost:${TEST_PORT}/test-doc`);
-    const ws2 = new WebSocket(`ws://localhost:${TEST_PORT}/test-doc`);
+    const ws1 = new WebSocket(`ws://localhost:${testPort}/test-doc`);
+    const ws2 = new WebSocket(`ws://localhost:${testPort}/test-doc`);
 
     await Promise.all([
       new Promise(resolve => ws1.on('open', resolve)),
@@ -97,7 +118,14 @@ describe('WebSocket Server with SQLite', () => {
     const text1 = doc1.getText('test');
     text1.insert(0, 'Hello');
     const update1 = Y.encodeStateAsUpdate(doc1);
-    ws1.send(Buffer.from(update1));
+    
+    // Send update and wait for it to be processed
+    await new Promise<void>((resolve, reject) => {
+      ws1.send(Buffer.from(update1), (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
 
     // Wait for second client to receive update
     const message = await new Promise(resolve => ws2.on('message', resolve));
@@ -110,7 +138,7 @@ describe('WebSocket Server with SQLite', () => {
   });
 
   test('should save state before cleanup', async () => {
-    const ws = new WebSocket(`ws://localhost:${TEST_PORT}/test-doc`);
+    const ws = new WebSocket(`ws://localhost:${testPort}/test-doc`);
     await new Promise(resolve => ws.on('open', resolve));
     
     // Send an update
@@ -118,10 +146,19 @@ describe('WebSocket Server with SQLite', () => {
     const text = doc.getText('test');
     text.insert(0, 'Test content');
     const update = Y.encodeStateAsUpdate(doc);
-    ws.send(Buffer.from(update));
+    
+    // Send update and wait for it to be processed
+    await new Promise<void>((resolve, reject) => {
+      ws.send(Buffer.from(update), (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
     
     // Wait for save
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise(resolve => setTimeout(resolve, TEST_SAVE_INTERVAL * 2));
+    
+    // Close connection and wait for cleanup
     ws.close();
     await new Promise(resolve => setTimeout(resolve, 100));
     
@@ -137,10 +174,10 @@ describe('WebSocket Server with SQLite', () => {
     const savedDoc = new Y.Doc();
     Y.applyUpdate(savedDoc, new Uint8Array(JSON.parse(savedState[0].state!)));
     expect(savedDoc.getText('test').toString()).toBe('Test content');
-  }, 10000); // Increase timeout for this test
+  });
 
   test('should handle large documents', async () => {
-    const ws = new WebSocket(`ws://localhost:${TEST_PORT}/test-doc`);
+    const ws = new WebSocket(`ws://localhost:${testPort}/test-doc`);
     await new Promise(resolve => ws.on('open', resolve));
     
     // Create a large document
@@ -150,10 +187,17 @@ describe('WebSocket Server with SQLite', () => {
     text.insert(0, largeText);
     
     const update = Y.encodeStateAsUpdate(doc);
-    ws.send(Buffer.from(update));
+    
+    // Send update and wait for it to be processed
+    await new Promise<void>((resolve, reject) => {
+      ws.send(Buffer.from(update), (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
     
     // Wait for save
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise(resolve => setTimeout(resolve, TEST_SAVE_INTERVAL * 2));
     
     // Check state was saved
     const savedState = await testDb.db
@@ -167,5 +211,5 @@ describe('WebSocket Server with SQLite', () => {
     const savedDoc = new Y.Doc();
     Y.applyUpdate(savedDoc, new Uint8Array(JSON.parse(savedState[0].state!)));
     expect(savedDoc.getText('test').toString()).toBe(largeText);
-  }, 10000); // Increase timeout for this test
+  });
 });

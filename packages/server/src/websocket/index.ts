@@ -24,8 +24,8 @@ function deserializeState(state: string): Uint8Array {
   return new Uint8Array(array);
 }
 
-async function saveState(db: Database, slug: string, state: string) {
-  // Check if y_doc exists
+async function saveState(db: Database, slug: string, doc: Y.Doc) {
+  const state = serializeState(doc);
   const [existing] = await db
     .select()
     .from(yDocs)
@@ -33,13 +33,11 @@ async function saveState(db: Database, slug: string, state: string) {
     .limit(1);
 
   if (existing) {
-    // Update existing y_doc
     await db
       .update(yDocs)
       .set({ state, updatedAt: new Date() })
       .where(eq(yDocs.docName, slug));
   } else {
-    // Create new y_doc
     await db
       .insert(yDocs)
       .values({
@@ -54,6 +52,8 @@ async function saveState(db: Database, slug: string, state: string) {
 export function setupWebSocket(server: any, db: Database = defaultDb, saveInterval = 5000) {
   const wss = new WebSocketServer({ server });
   const docs = new Map<string, Y.Doc>();
+  const intervals = new Map<string, NodeJS.Timeout>();
+  const pendingSaves = new Map<string, Promise<void>>();
 
   wss.on('connection', async (ws: WebSocket, req: IncomingMessage) => {
     console.log('WebSocket connection established');
@@ -98,32 +98,26 @@ export function setupWebSocket(server: any, db: Database = defaultDb, saveInterv
           } catch (err) {
             console.error('Error loading state:', err);
             // Create fresh state if loading fails
-            await saveState(db, slug, serializeState(doc));
+            await saveState(db, slug, doc);
           }
         } else {
           // Save initial state
-          await saveState(db, slug, serializeState(doc));
+          await saveState(db, slug, doc);
         }
 
         // Save document state periodically
         const interval = setInterval(async () => {
           if (!doc) return;
           try {
-            await saveState(db, slug, serializeState(doc));
+            const savePromise = saveState(db, slug, doc);
+            pendingSaves.set(slug, savePromise);
+            await savePromise;
+            pendingSaves.delete(slug);
           } catch (err) {
             console.error('Error saving state:', err);
           }
         }, saveInterval);
-
-        // Clean up on all clients disconnected
-        const cleanup = () => {
-          if (wss.clients.size === 0) {
-            clearInterval(interval);
-            docs.delete(slug);
-          }
-        };
-
-        ws.on('close', cleanup);
+        intervals.set(slug, interval);
       } catch (err) {
         console.error('Error initializing document:', err);
         ws.close(1011, 'Failed to initialize document');
@@ -136,17 +130,31 @@ export function setupWebSocket(server: any, db: Database = defaultDb, saveInterv
       try {
         const update = new Uint8Array(message);
         if (!doc) return;
+
+        // Apply update to document
         Y.applyUpdate(doc, update);
         
         // Save state immediately after update
-        await saveState(db, slug, serializeState(doc));
+        const savePromise = saveState(db, slug, doc);
+        pendingSaves.set(slug, savePromise);
+        await savePromise;
+        pendingSaves.delete(slug);
         
         // Broadcast to all clients except sender
+        const broadcastPromises: Promise<void>[] = [];
         wss.clients.forEach((client: WebSocket) => {
           if (client !== ws && client.readyState === WebSocket.OPEN) {
-            client.send(Buffer.from(update)); // Convert Uint8Array to Buffer
+            broadcastPromises.push(
+              new Promise<void>((resolve, reject) => {
+                client.send(Buffer.from(update), (err) => {
+                  if (err) reject(err);
+                  else resolve();
+                });
+              })
+            );
           }
         });
+        await Promise.all(broadcastPromises);
       } catch (err) {
         console.error('Error processing message:', err);
       }
@@ -155,8 +163,58 @@ export function setupWebSocket(server: any, db: Database = defaultDb, saveInterv
     // Send initial document state
     if (doc) {
       const initialState = Y.encodeStateAsUpdate(doc);
-      ws.send(Buffer.from(initialState)); // Convert Uint8Array to Buffer
+      await new Promise<void>((resolve, reject) => {
+        ws.send(Buffer.from(initialState), (err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
     }
+
+    // Clean up on client disconnect
+    ws.on('close', async () => {
+      // Wait for any pending saves to complete
+      const pendingSave = pendingSaves.get(slug);
+      if (pendingSave) {
+        try {
+          await pendingSave;
+        } catch (err) {
+          console.error('Error waiting for pending save:', err);
+        }
+      }
+
+      // Save final state before cleanup
+      if (doc) {
+        try {
+          // Save state one last time and wait for it to complete
+          await saveState(db, slug, doc);
+
+          // Double check the state was saved correctly
+          const [result] = await db
+            .select()
+            .from(yDocs)
+            .where(eq(yDocs.docName, slug))
+            .limit(1);
+
+          if (!result?.state) {
+            console.error('Failed to save final state');
+            return;
+          }
+
+          // Only clean up if this was the last client
+          if (wss.clients.size === 0) {
+            const interval = intervals.get(slug);
+            if (interval) {
+              clearInterval(interval);
+              intervals.delete(slug);
+            }
+            docs.delete(slug);
+          }
+        } catch (err) {
+          console.error('Error saving final state:', err);
+        }
+      }
+    });
   });
 
   return wss;
