@@ -24,19 +24,22 @@
 ## 2. Core Editor Implementation
 
 ### Basic Editor
-- Implement plain text editor using ProseMirror
+- Implement text editor using Tiptap
+- Configure essential Tiptap extensions
+  - Document
+  - Paragraph
+  - Text
+  - Collaboration
 - Add basic text formatting capabilities
-- Implement cursor management
-- Add undo/redo functionality
 
 ### CRDT Integration
-- Implement Yjs for CRDT functionality
-- Set up document structure
-- Implement change tracking
-- Add conflict resolution
+- Integrate Yjs through Tiptap's built-in collaboration extension
+- Set up y-websocket provider
+- Configure document structure
+- Add offline persistence with y-indexeddb
 
 ### Local Storage
-- Implement IndexedDB storage
+- Implement IndexedDB storage via y-indexeddb
 - Add offline capability
 - Implement sync queue for offline changes
 - Add local version history
@@ -55,7 +58,7 @@ interface Note {
 
 interface Version {
   id: string;
-  content: string;
+  snapshot: Uint8Array; // Yjs encoded state
   timestamp: Date;
   author: string;
 }
@@ -75,17 +78,17 @@ interface UserEdit {
 - Authentication endpoints
 
 ### WebSocket Implementation
-- Set up WebSocket server
-- Implement real-time updates
+- Set up y-websocket server
+- Implement real-time updates through Yjs
 - Handle client connections/disconnections
-- Implement presence tracking
+- Implement presence tracking via Tiptap's Collaboration extension
 
 ## 4. Collaborative Features
 
 ### User Highlighting
 - Implement user color selection
 - Store color preference in cookies
-- Add highlight rendering system
+- Add highlight rendering through Tiptap decorations
 - Implement time-based fade out
   ```typescript
   interface Highlight {
@@ -98,10 +101,33 @@ interface UserEdit {
   ```
 
 ### Version Control
-- Implement version tracking
+- Implement version tracking using Yjs snapshots
+  ```typescript
+  function saveVersion(doc: Y.Doc): Uint8Array {
+    return Y.encodeStateAsUpdate(doc);
+  }
+  
+  function revertToVersion(doc: Y.Doc, snapshot: Uint8Array) {
+    doc.gc = false;
+    const snapshotDoc = Y.createDocFromSnapshot(doc, Y.decodeSnapshot(snapshot));
+    
+    const currentStateVector = Y.encodeStateVector(doc);
+    const snapshotStateVector = Y.encodeStateVector(snapshotDoc);
+    
+    const changesSinceSnapshot = Y.encodeStateAsUpdate(doc, snapshotStateVector);
+    
+    const um = new Y.UndoManager([...snapshotDoc.share.values()]);
+    Y.applyUpdate(snapshotDoc, changesSinceSnapshot);
+    um.undo();
+    
+    const revertChanges = Y.encodeStateAsUpdate(snapshotDoc, currentStateVector);
+    Y.applyUpdate(doc, revertChanges);
+    doc.gc = true;
+  }
+  ```
 - Add version comparison view
-- Implement version restoration
 - Add version browsing UI
+- Store versions in MongoDB
 
 ## 5. URL & Embedding System
 
@@ -162,10 +188,10 @@ interface UserEdit {
 ## 9. Progressive Enhancement
 
 ### Offline Support
-- Implement service worker
-- Add offline editing
-- Handle sync conflicts
+- Leverage y-indexeddb for offline editing
+- Handle sync conflicts through Yjs
 - Add offline indicators
+- Implement service worker for asset caching
 
 ### Mobile Support
 - Add responsive design
@@ -175,12 +201,12 @@ interface UserEdit {
 
 ## Implementation Order
 
-1. Basic editor + local storage
-2. Server setup + REST API
-3. CRDT implementation
+1. Basic Tiptap editor setup
+2. Server setup + y-websocket provider
+3. Yjs integration via Tiptap Collaboration
 4. Real-time collaboration
 5. User highlighting
-6. Version history
+6. Yjs-based version history
 7. URL system
 8. Embedding support
 9. Security + Performance
