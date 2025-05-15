@@ -7,19 +7,20 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "lint": "eslint src",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "migrate": "tsx src/db/migrations/run.ts"
   },
   "dependencies": {
     "@beepad/shared": "workspace:*",
     "@hono/node-server": "^1.14.1",
     "hono": "^4.7.9",
-    "mongodb": "^6.16.0",
-    "y-mongodb-provider": "^0.2.0",
+    "pg": "^8.11.3",
     "y-websocket": "^3.0.0",
     "yjs": "^13.6.27"
   },
   "devDependencies": {
     "@types/node": "^22.15.18",
+    "@types/pg": "^8.11.2",
     "eslint": "^9.26.0",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3"
