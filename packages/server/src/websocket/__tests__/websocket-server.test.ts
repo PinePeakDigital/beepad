@@ -1,47 +1,30 @@
-import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import { WebSocket, WebSocketServer } from 'ws';
 import * as Y from 'yjs';
 import { setupWebSocket } from '../index';
 import { createServer } from 'http';
-import { db } from '../../db';
+import { createTestDb } from '../../db/__tests__/test-db';
+import { eq } from 'drizzle-orm';
+import { yDocs } from '../../db/schema';
 
-// Mock the database
-vi.mock('../../db', () => ({
-  db: {
-    insert: vi.fn().mockReturnValue({ values: vi.fn().mockReturnValue({ returning: vi.fn() }) }),
-    select: vi.fn().mockReturnValue({
-      from: vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          limit: vi.fn()
-        })
-      })
-    }),
-    transaction: vi.fn().mockImplementation(async (cb) => cb({ 
-      update: vi.fn().mockReturnValue({
-        set: vi.fn().mockReturnValue({
-          where: vi.fn()
-        })
-      })
-    }))
-  }
-}));
-
-describe('WebSocket Server', () => {
+describe('WebSocket Server with SQLite', () => {
   let server: ReturnType<typeof createServer>;
   let wss: WebSocketServer;
-  let clientSocket: WebSocket;
   const TEST_PORT = 3002;
+  const testDb = createTestDb();
 
   beforeEach(() => {
     server = createServer();
-    wss = setupWebSocket(server);
+    wss = setupWebSocket(server, testDb.db);
     server.listen(TEST_PORT);
   });
 
   afterEach(() => {
     wss.close();
     server.close();
-    vi.clearAllMocks();
+    // Clear all tables
+    testDb.sqlite.exec('DELETE FROM y_docs');
+    testDb.sqlite.exec('DELETE FROM notes');
   });
 
   test('should handle rapid connect/disconnect cycles', async () => {
@@ -60,25 +43,31 @@ describe('WebSocket Server', () => {
   });
 
   test('should preserve state across multiple connections', async () => {
-    const doc1 = new Y.Doc();
-    const text1 = doc1.getText('test');
-    text1.insert(0, 'Hello');
-
-    // Mock DB to return this state
-    const state = Array.from(Y.encodeStateAsUpdate(doc1));
-    vi.mocked(db.select).mockReturnValueOnce({
-      from: vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          limit: vi.fn().mockResolvedValue([{ state: JSON.stringify(state) }])
-        })
-      })
-    });
-
+    // First connection: create and save state
     const ws1 = new WebSocket(`ws://localhost:${TEST_PORT}/test-doc`);
     await new Promise(resolve => ws1.on('open', resolve));
-    
-    // Wait for initial state
-    const message = await new Promise(resolve => ws1.on('message', resolve));
+
+    // Create and send an update
+    const doc = new Y.Doc();
+    const text = doc.getText('test');
+    text.insert(0, 'Hello');
+    const update = Y.encodeStateAsUpdate(doc);
+    ws1.send(Buffer.from(update));
+
+    // Wait for save
+    await new Promise(resolve => setTimeout(resolve, 100));
+    ws1.close();
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Verify state was saved
+    const savedState = await testDb.db.select().from(yDocs).where(eq(yDocs.docName, 'test-doc'));
+    expect(savedState[0]).toBeTruthy();
+
+    // Second connection: should receive saved state
+    const ws2 = new WebSocket(`ws://localhost:${TEST_PORT}/test-doc`);
+    await new Promise(resolve => ws2.on('open', resolve));
+
+    const message = await new Promise(resolve => ws2.on('message', resolve));
     const receivedState = new Uint8Array(message as Buffer);
     
     const newDoc = new Y.Doc();
@@ -96,13 +85,24 @@ describe('WebSocket Server', () => {
       new Promise(resolve => ws2.on('open', resolve))
     ]);
 
-    // Both connections should be active
-    expect(wss.clients.size).toBe(2);
+    // Create and send an update from first client
+    const doc1 = new Y.Doc();
+    const text1 = doc1.getText('test');
+    text1.insert(0, 'Hello');
+    const update1 = Y.encodeStateAsUpdate(doc1);
+    ws1.send(Buffer.from(update1));
+
+    // Wait for second client to receive update
+    const message = await new Promise(resolve => ws2.on('message', resolve));
+    const receivedState = new Uint8Array(message as Buffer);
+    
+    const doc2 = new Y.Doc();
+    Y.applyUpdate(doc2, receivedState);
+    
+    expect(doc2.getText('test').toString()).toBe('Hello');
   });
 
   test('should save state before cleanup', async () => {
-    const saveSpy = vi.spyOn(db, 'transaction');
-    
     const ws = new WebSocket(`ws://localhost:${TEST_PORT}/test-doc`);
     await new Promise(resolve => ws.on('open', resolve));
     
@@ -120,8 +120,14 @@ describe('WebSocket Server', () => {
     // Wait for cleanup
     await new Promise(resolve => setTimeout(resolve, 100));
     
-    // Should have called save at least once
-    expect(saveSpy).toHaveBeenCalled();
+    // Check state was saved
+    const savedState = await testDb.db.select().from(yDocs).where(eq(yDocs.docName, 'test-doc'));
+    expect(savedState[0].state).toBeTruthy();
+
+    // Verify saved state is correct
+    const savedDoc = new Y.Doc();
+    Y.applyUpdate(savedDoc, new Uint8Array(JSON.parse(savedState[0].state!)));
+    expect(savedDoc.getText('test').toString()).toBe('Test content');
   });
 
   test('should handle large documents', async () => {
@@ -137,7 +143,16 @@ describe('WebSocket Server', () => {
     const update = Y.encodeStateAsUpdate(doc);
     ws.send(Buffer.from(update));
     
-    // Should not throw
+    // Wait for save
     await new Promise(resolve => setTimeout(resolve, 100));
+    
+    // Check state was saved
+    const savedState = await testDb.db.select().from(yDocs).where(eq(yDocs.docName, 'test-doc'));
+    expect(savedState[0].state).toBeTruthy();
+
+    // Verify saved state is correct
+    const savedDoc = new Y.Doc();
+    Y.applyUpdate(savedDoc, new Uint8Array(JSON.parse(savedState[0].state!)));
+    expect(savedDoc.getText('test').toString()).toBe(largeText);
   });
 });

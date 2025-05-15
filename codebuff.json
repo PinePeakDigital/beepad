@@ -23,6 +23,12 @@
       "name": "docker",
       "command": "docker compose up",
       "stdoutFile": "logs/docker.log"
+    },
+    {
+      "name": "server/test",
+      "command": "pnpm --filter @beepad/server test",
+      "cwd": "packages/server",
+      "stdoutFile": "logs/server-test.log"
     }
   ]
 }

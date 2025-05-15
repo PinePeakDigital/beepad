@@ -1,12 +1,16 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import * as Y from 'yjs';
-import { db } from '../db';
+import { db as defaultDb } from '../db';
 import { yDocs } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { createNote, getNoteBySlug } from '../db/models/note';
 import { IncomingMessage } from 'http';
+import { PostgresJsDatabase, BetterSQLite3Database } from 'drizzle-orm/postgres-js';
+import { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
-export function setupWebSocket(server: any) {
+type Database = PostgresJsDatabase | BetterSQLite3Database;
+
+export function setupWebSocket(server: any, db: Database = defaultDb) {
   const wss = new WebSocketServer({ server });
   const docs = new Map<string, Y.Doc>();
 
@@ -60,7 +64,7 @@ export function setupWebSocket(server: any) {
       const saveInterval = setInterval(async () => {
         if (!doc) return;
         const state = JSON.stringify(Array.from(Y.encodeStateAsUpdate(doc)));
-        await db.transaction(async (tx) => {
+        await db.transaction(async (tx: any) => {
           await tx
             .update(yDocs)
             .set({ state, updatedAt: new Date() })
