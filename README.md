@@ -10,6 +10,7 @@ BeePad is a local-first, real-time multiplayer plain text note-taking applicatio
 - **🎨 User Highlights**: See who made which changes with customizable user colors that fade over time
 - **🔄 Offline Support**: Keep working even without an internet connection - changes sync when you're back online
 - **🔗 Simple URLs**: Access notes with human-readable URLs - just add your preferred name to the URL
+- **🔌 REST API**: Full CRUD operations available through a RESTful API
 - **📦 Embeddable**: Embed any note in your website or application using a simple iframe
 - **📚 Version History**: Every change is automatically versioned with full restore capability
 - **📱 Cross-Platform**: Available for Windows, macOS, and Linux
@@ -40,6 +41,39 @@ https://beepad.app/my-awesome-note
 ```
 
 If the note doesn't exist yet, it will be created instantly. If it does exist, you'll join the existing note.
+
+### REST API
+
+The BeePad API provides programmatic access to notes:
+
+```bash
+# Create a note
+POST /api/notes
+{
+  "slug": "my-note",
+  "content": "Hello, world!"
+}
+
+# Get a note
+GET /api/notes/my-note
+
+# Update a note
+PUT /api/notes/my-note
+{
+  "content": "Updated content"
+}
+
+# Delete a note
+DELETE /api/notes/my-note
+
+# List versions of a note
+GET /api/notes/my-note/versions
+
+# Get specific version
+GET /api/notes/my-note/versions/123
+```
+
+All API endpoints return JSON responses. Authentication is required via Bearer token.
 
 ### Collaborative Features
 
@@ -88,6 +122,7 @@ Embed any note in your website or application using an iframe:
 - [ ] Local storage integration
 - [ ] CRDT implementation
 - [ ] Server sync implementation
+- [ ] REST API implementation
 - [ ] Real-time collaboration
 - [ ] User highlight colors
 - [ ] Time-based highlight fading
