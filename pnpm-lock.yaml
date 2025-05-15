@@ -52,7 +52,20 @@ importers:
         version: 5.8.3
 
   packages/shared:
+    dependencies:
+      yjs:
+        specifier: ^13.6.27
+        version: 13.6.27
+      zod:
+        specifier: ^3.24.4
+        version: 3.24.4
     devDependencies:
+      '@types/node':
+        specifier: ^22.15.18
+        version: 22.15.18
+      eslint:
+        specifier: ^9.26.0
+        version: 9.26.0(jiti@2.4.2)
       typescript:
         specifier: ^5.8.3
         version: 5.8.3
