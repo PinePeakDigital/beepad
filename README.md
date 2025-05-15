@@ -10,6 +10,7 @@ BeePad is a local-first, real-time multiplayer plain text note-taking applicatio
 - **🔄 Offline Support**: Keep working even without an internet connection - changes sync when you're back online
 - **🔗 Simple URLs**: Access notes with human-readable URLs - just add your preferred name to the URL
 - **📦 Embeddable**: Embed any note in your website or application using a simple iframe
+- **📚 Version History**: Every change is automatically versioned with full restore capability
 - **📱 Cross-Platform**: Available for Windows, macOS, and Linux
 
 ## Getting Started
@@ -39,6 +40,20 @@ https://beepad.app/my-awesome-note
 
 If the note doesn't exist yet, it will be created instantly. If it does exist, you'll join the existing note.
 
+### Version History
+
+Every change to a note is automatically versioned. Access previous versions by adding `/versions` to any note URL:
+
+```
+https://beepad.app/my-awesome-note/versions
+```
+
+You can:
+- Browse through all previous versions
+- See what changed between versions
+- Restore the note to any previous version
+- Copy content from old versions
+
 ### Embedding Notes
 
 Embed any note in your website or application using an iframe:
@@ -67,6 +82,8 @@ Embed any note in your website or application using an iframe:
 - [ ] Real-time collaboration
 - [ ] Slug-based URLs
 - [ ] Instant note creation
+- [ ] Version history
+- [ ] Version restoration
 - [ ] Iframe embedding support
 - [ ] Offline support
 
