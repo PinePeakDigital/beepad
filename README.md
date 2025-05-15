@@ -7,6 +7,7 @@ BeePad is a local-first, real-time multiplayer plain text note-taking applicatio
 - **📝 Plain Text First**: Focus on your content with a clean, distraction-free plain text editor
 - **🔒 Local-First Architecture**: Your notes are stored locally first, ensuring you always have access to your data
 - **👥 Real-Time Collaboration**: Work together with others in real-time, with changes syncing seamlessly
+- **🎨 User Highlights**: See who made which changes with customizable user colors that fade over time
 - **🔄 Offline Support**: Keep working even without an internet connection - changes sync when you're back online
 - **🔗 Simple URLs**: Access notes with human-readable URLs - just add your preferred name to the URL
 - **📦 Embeddable**: Embed any note in your website or application using a simple iframe
@@ -39,6 +40,14 @@ https://beepad.app/my-awesome-note
 ```
 
 If the note doesn't exist yet, it will be created instantly. If it does exist, you'll join the existing note.
+
+### Collaborative Features
+
+#### User Highlights
+- Each user's edits are highlighted in their chosen color
+- Highlights gradually fade over days, showing the age of changes
+- Customize your highlight color in the settings
+- Colors are remembered per device using cookies
 
 ### Version History
 
@@ -80,6 +89,8 @@ Embed any note in your website or application using an iframe:
 - [ ] CRDT implementation
 - [ ] Server sync implementation
 - [ ] Real-time collaboration
+- [ ] User highlight colors
+- [ ] Time-based highlight fading
 - [ ] Slug-based URLs
 - [ ] Instant note creation
 - [ ] Version history
