@@ -1,14 +1,13 @@
 # BeePad 🐝
 
-BeePad is a local-first, real-time multiplayer plain text note-taking application that puts your privacy and data ownership first while enabling seamless collaboration.
+BeePad is a real-time multiplayer plain text note-taking application that enables seamless collaboration while being resilient to network issues.
 
 ## Features
 
 - **📝 Plain Text First**: Focus on your content with a clean, distraction-free plain text editor
-- **🔒 Local-First Architecture**: Your notes are stored locally first, ensuring you always have access to your data
+- **🔄 Connection Resilience**: Keep working during connection issues - changes sync automatically when reconnected
 - **👥 Real-Time Collaboration**: Work together with others in real-time, with changes syncing seamlessly
 - **🎨 User Highlights**: See who made which changes with customizable user colors that fade over time
-- **🔄 Offline Support**: Keep working even without an internet connection - changes sync when you're back online
 - **🔗 Simple URLs**: Access notes with human-readable URLs - just add your preferred name to the URL
 - **🔌 REST API**: Full CRUD operations available through a RESTful API
 - **📦 Embeddable**: Embed any note in your website or application using a simple iframe
@@ -30,7 +29,7 @@ pnpm build
 
 ## How It Works
 
-BeePad uses Conflict-free Replicated Data Types (CRDTs) to enable real-time collaboration while maintaining local-first principles. All data is stored locally first and synced with a secure server instance. The server acts as a relay point for real-time collaboration and provides persistent storage.
+BeePad uses Conflict-free Replicated Data Types (CRDTs) to enable real-time collaboration while maintaining data consistency during network interruptions. Changes are synced with the server when connected, and the editor remains fully functional even during connection drops.
 
 ### Creating & Accessing Notes
 
@@ -119,7 +118,7 @@ Embed any note in your website or application using an iframe:
 ## Roadmap
 
 - [ ] Basic text editor implementation
-- [ ] Local storage integration
+- [ ] Connection resilience
 - [ ] CRDT implementation
 - [ ] Server sync implementation
 - [ ] REST API implementation
@@ -131,7 +130,7 @@ Embed any note in your website or application using an iframe:
 - [ ] Version history
 - [ ] Version restoration
 - [ ] Iframe embedding support
-- [ ] Offline support
+- [ ] Network resilience
 
 ## Support
 
