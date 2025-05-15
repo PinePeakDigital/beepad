@@ -1,12 +1,16 @@
 {
   "name": "beepad",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "private": true,
+  "description": "Real-time collaborative plain text editor",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "pnpm -r run dev",
+    "build": "pnpm -r run build",
+    "test": "pnpm -r run test",
+    "lint": "pnpm -r run lint",
+    "typecheck": "pnpm -r run typecheck"
   },
-  "keywords": [],
+  "keywords": ["collaboration", "text-editor", "crdt", "yjs", "tiptap"],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.6.1"
