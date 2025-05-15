@@ -10,18 +10,18 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "hono": "^4.0.0",
-    "@hono/node-server": "^1.0.0",
-    "mongodb": "^6.0.0",
-    "y-websocket": "^1.5.0",
-    "y-mongodb-provider": "^0.1.0",
-    "yjs": "^13.6.0",
-    "@beepad/shared": "workspace:*"
+    "@beepad/shared": "workspace:*",
+    "@hono/node-server": "^1.14.1",
+    "hono": "^4.7.9",
+    "mongodb": "^6.16.0",
+    "y-mongodb-provider": "^0.2.0",
+    "y-websocket": "^3.0.0",
+    "yjs": "^13.6.27"
   },
   "devDependencies": {
-    "tsx": "^4.0.0",
-    "typescript": "^5.0.0",
-    "eslint": "^8.0.0",
-    "@types/node": "^20.0.0"
+    "@types/node": "^22.15.18",
+    "eslint": "^9.26.0",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
   }
 }
