@@ -17,7 +17,7 @@ export const notes = pgTable("notes", {
 export const versions = pgTable("versions", {
   id: serial("id").primaryKey(),
   noteId: integer("note_id").references(() => notes.id),
-  snapshot: json("snapshot").notNull(),
+  snapshot: text("snapshot").notNull(),
   author: text("author").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
@@ -31,7 +31,7 @@ export const userPreferences = pgTable("user_preferences", {
 
 export const yDocs = pgTable("y_docs", {
   docName: text("doc_name").primaryKey(),
-  state: json("state"),
+  state: text("state"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });

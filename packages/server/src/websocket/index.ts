@@ -39,7 +39,7 @@ export function setupWebSocket(server: any) {
         await db.insert(yDocs)
           .values({
             docName: slug,
-            state: Y.encodeStateAsUpdate(doc)
+            state: JSON.stringify(Array.from(Y.encodeStateAsUpdate(doc)))
           });
       }
 
@@ -52,13 +52,14 @@ export function setupWebSocket(server: any) {
 
       if (result?.state) {
         console.log(`Loading existing state for: ${slug}`);
-        Y.applyUpdate(doc, result.state);
+        const state = new Uint8Array(JSON.parse(result.state));
+        Y.applyUpdate(doc, state);
       }
 
       // Save document state periodically
       const saveInterval = setInterval(async () => {
         if (!doc) return;
-        const state = Y.encodeStateAsUpdate(doc);
+        const state = JSON.stringify(Array.from(Y.encodeStateAsUpdate(doc)));
         await db.transaction(async (tx) => {
           await tx
             .update(yDocs)
