@@ -4,9 +4,9 @@ import Collaboration from "@tiptap/extension-collaboration";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 import { useEffect, useMemo } from "react";
-import { useEditor } from "../../context/EditorContext.js";
-import { EditorContent } from "./EditorContent.js";
-import { Toolbar } from "./Toolbar.js";
+import { useEditor } from "../../context/EditorContext";
+import { EditorContent } from "./EditorContent";
+import { Toolbar } from "./Toolbar";
 
 interface EditorProps {
   docName: string;

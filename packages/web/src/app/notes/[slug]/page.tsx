@@ -1,11 +1,18 @@
-'use client';
+"use client";
 
-import NotePageClient from './note-page-client';
+import { useEffect, useState } from "react";
+import NotePageClient from "./note-page-client";
 
 type Props = {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 };
 
 export default function Page({ params }: Props) {
-  return <NotePageClient slug={params.slug} />;
+  const [slug, setSlug] = useState<string>();
+
+  useEffect(() => {
+    params.then(({ slug: newSlug }) => setSlug(newSlug));
+  }, [params]);
+
+  return <>{slug && <NotePageClient slug={slug} />}</>;
 }

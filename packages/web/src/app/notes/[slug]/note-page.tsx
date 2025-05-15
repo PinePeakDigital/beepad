@@ -1,14 +1,21 @@
-'use client';
+"use client";
 
-import { Editor } from '../../../components/editor';
-import { EditorProvider } from '../../../context/EditorContext';
-import Link from 'next/link';
+import { useEffect, useState } from "react";
+import { Editor } from "../../../components/editor";
+import { EditorProvider } from "../../../context/EditorContext";
+import Link from "next/link";
 
 interface Props {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export default function NotePage({ params }: Props) {
+  const [slug, setSlug] = useState<string>();
+
+  useEffect(() => {
+    params.then(({ slug: newSlug }) => setSlug(newSlug));
+  }, [params]);
+
   return (
     <main className="min-h-screen p-4">
       <div className="max-w-4xl mx-auto">
@@ -16,11 +23,9 @@ export default function NotePage({ params }: Props) {
           <Link href="/" className="text-blue-500 hover:underline">
             ← Back to Home
           </Link>
-          <h1 className="text-3xl font-bold">{params.slug}</h1>
+          <h1 className="text-3xl font-bold">{slug}</h1>
         </div>
-        <EditorProvider>
-          <Editor docName={params.slug} />
-        </EditorProvider>
+        <EditorProvider>{slug && <Editor docName={slug} />}</EditorProvider>
       </div>
     </main>
   );

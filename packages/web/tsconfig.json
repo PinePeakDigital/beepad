@@ -10,8 +10,8 @@
     "allowJs": true,
     "noEmit": true,
     "incremental": true,
-    "module": "nodenext",
-    "moduleResolution": "nodenext"
+    "module": "ESNext",
+    "moduleResolution": "bundler"
   },
   "include": ["next-env.d.ts", "src", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
