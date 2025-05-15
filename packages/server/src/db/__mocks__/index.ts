@@ -52,16 +52,8 @@ const logger = new DefaultLogger({ writer: new MyLogWriter() });
 class PglitePool {
   private client: PGlite;
 
-  constructor() {
-    this.client = new PGlite();
-    this.setupSchema();
-  }
-
-  private setupSchema() {
-    this.client.exec(`
-      CREATE TABLE IF NOT EXISTS notes (...);
-      -- Other tables...
-    `);
+  constructor(client: PGlite) {
+    this.client = client;
   }
 
   async connect() {
@@ -91,7 +83,7 @@ class PglitePool {
 }
 
 // Create the pool instance and the drizzle db
-const pool = new PglitePool();
+const pool = new PglitePool(client);
 
 export const db: PgliteDatabase<typeof schema> = drizzle(client, {
   schema,
