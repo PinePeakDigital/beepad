@@ -1,5 +1,5 @@
-import { Editor } from '@tiptap/core';
-import { createContext, useContext, ReactNode, useState, useCallback } from 'react';
+import { Editor } from "@tiptap/core";
+import { createContext, useContext, ReactNode, useState } from "react";
 
 interface EditorContextType {
   editor: Editor | null;
@@ -21,7 +21,7 @@ export function EditorProvider({ children }: { children: ReactNode }) {
 export function useEditor() {
   const context = useContext(EditorContext);
   if (!context) {
-    throw new Error('useEditor must be used within an EditorProvider');
+    throw new Error("useEditor must be used within an EditorProvider");
   }
   return context;
 }
