@@ -1,44 +1,44 @@
-import { query, transaction } from '../index';
+import { eq } from 'drizzle-orm';
+import { db } from '../index';
+import { notes, yDocs } from '../schema';
 import type { Note } from '@beepad/shared';
 
 export async function createNote(slug: string): Promise<Note> {
-  return await transaction(async (client) => {
-    // Create note
-    const noteResult = await client.query(
-      'INSERT INTO notes (slug) VALUES ($1) RETURNING *',
-      [slug]
-    );
+  const [note] = await db.insert(notes)
+    .values({ slug })
+    .returning();
 
-    // Create y_doc entry
-    await client.query(
-      'INSERT INTO y_docs (doc_name) VALUES ($1)',
-      [slug]
-    );
+  await db.insert(yDocs)
+    .values({ docName: slug })
+    .returning();
 
-    return noteResult.rows[0];
-  });
+  return note;
 }
 
 export async function getNoteBySlug(slug: string): Promise<Note | null> {
-  const result = await query(
-    'SELECT notes.*, y_docs.state FROM notes LEFT JOIN y_docs ON notes.slug = y_docs.doc_name WHERE notes.slug = $1',
-    [slug]
-  );
-  return result.rows[0] || null;
+  const [note] = await db
+    .select()
+    .from(notes)
+    .leftJoin(yDocs, eq(notes.slug, yDocs.docName))
+    .where(eq(notes.slug, slug))
+    .limit(1);
+
+  return note?.notes || null;
 }
 
 export async function updateNote(slug: string, content: string): Promise<Note> {
-  const result = await query(
-    'UPDATE notes SET content = $1, updated_at = NOW() WHERE slug = $2 RETURNING *',
-    [content, slug]
-  );
-  return result.rows[0];
+  const [note] = await db
+    .update(notes)
+    .set({ updatedAt: new Date() })
+    .where(eq(notes.slug, slug))
+    .returning();
+
+  return note;
 }
 
 export async function deleteNote(slug: string): Promise<void> {
-  await transaction(async (client) => {
-    // Delete y_doc first due to foreign key constraint
-    await client.query('DELETE FROM y_docs WHERE doc_name = $1', [slug]);
-    await client.query('DELETE FROM notes WHERE slug = $1', [slug]);
+  await db.transaction(async (tx) => {
+    await tx.delete(yDocs).where(eq(yDocs.docName, slug));
+    await tx.delete(notes).where(eq(notes.slug, slug));
   });
 }

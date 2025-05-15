@@ -35,8 +35,7 @@ export async function up() {
   // Yjs document storage
   await query(`
     CREATE TABLE y_docs (
-      doc_id TEXT PRIMARY KEY,
-      doc_name TEXT NOT NULL,
+      doc_name TEXT PRIMARY KEY,
       state BYTEA,
       created_at TIMESTAMPTZ DEFAULT NOW(),
       updated_at TIMESTAMPTZ DEFAULT NOW()
