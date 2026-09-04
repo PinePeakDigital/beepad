@@ -15,3 +15,11 @@ updates:
       npm-security:
         applies-to: security-updates
         patterns: ["*"]
+    # PARKED 2026-09-04. beepad is dormant — last substantive commit 2025-05-15,
+    # and `main` has not typechecked or built since (a half-finished drizzle
+    # migration left packages/shared's Note type disagreeing with the schema).
+    # There is also no CI here, so every version-update PR reported "all checks
+    # passed" while nothing checked it, onto an already-broken tree.
+    # Version updates are off until the build is fixed and CI exists. Security
+    # updates are NOT subject to this limit and still come through.
+    open-pull-requests-limit: 0
